@@ -1,0 +1,7 @@
+// Size: 3 B
+### GET request to get all patients
+GET http://localhost:4004/api/patients HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlckB0ZXN0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1Mzk3NDkzMiwiZXhwIjoxNzU0MDEwOTMyfQ.BsrEcJwn3RpiOOEiog_sCF1zMNm6oNDDdqIkGjw1IFA
+Content-Length: 3
+
+###

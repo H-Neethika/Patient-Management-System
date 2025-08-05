@@ -1,0 +1,21 @@
+// Status: 200, time: 1,107ms, size: 179 B
+/*
+post js executed result:
+token was set to(global scope): eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlckB0ZXN0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1Mzk3NDEwMCwiZXhwIjoxNzU0MDEwMTAwfQ.44hfWn_8Pf9Mn3GTEBdLnIId0UIZaS2P9lo3T2W03zI
+*/
+### Login Request to retrieve a token
+POST http://localhost:4004/auth/login HTTP/1.1
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+content-type: application/json
+date: Thu, 31 Jul 2025 15:01:40 GMT
+expires: 0
+pragma: no-cache
+transfer-encoding: chunked
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 0
+
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0dXNlckB0ZXN0LmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1Mzk3NDEwMCwiZXhwIjoxNzU0MDEwMTAwfQ.44hfWn_8Pf9Mn3GTEBdLnIId0UIZaS2P9lo3T2W03zI"
+}
+>> D:\Engineering Notes\Semester 7\EC7204 Cloud Computing\Assignment\Project\Patient-Management-System\.idea\httpClient\07-31\Login Request to retrieve a token\2025-07-31T203140.json

@@ -1,0 +1,21 @@
+// Status: 415, time: 112ms, size: 107 B
+### Login Request to retrieve a token
+POST http://localhost:4005/login HTTP/1.1
+accept: application/json, application/yaml, application/*+json
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+content-type: application/json
+date: Thu, 31 Jul 2025 14:37:27 GMT
+expires: 0
+pragma: no-cache
+transfer-encoding: chunked
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 0
+
+{
+  "timestamp": "2025-07-31T14:37:27.257+00:00",
+  "status": 415,
+  "error": "Unsupported Media Type",
+  "path": "/login"
+}
+>> D:\Engineering Notes\Semester 7\EC7204 Cloud Computing\Assignment\Project\Patient-Management-System\.idea\httpClient\07-31\Login Request to retrieve a token\2025-07-31T200727.json

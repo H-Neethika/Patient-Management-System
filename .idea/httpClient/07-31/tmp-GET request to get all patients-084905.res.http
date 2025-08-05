@@ -1,0 +1,14 @@
+// Status: 500, time: 106ms, size: 138 B
+### GET request to get all patients
+GET http://localhost:4004/api/patients HTTP/1.1
+content-length: 138
+content-type: application/json
+
+{
+  "timestamp": "2025-07-31T15:19:05.056+00:00",
+  "path": "/api/patients",
+  "status": 500,
+  "error": "Internal Server Error",
+  "requestId": "0b50a610-7"
+}
+>> D:\Engineering Notes\Semester 7\EC7204 Cloud Computing\Assignment\Project\Patient-Management-System\.idea\httpClient\07-31\GET request to get all patients\2025-07-31T204905.json
