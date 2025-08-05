@@ -1,0 +1,14 @@
+// Status: 200, time: 77ms, size: 0 B
+### GET request to validate Token
+GET http://localhost:4004/auth/validate HTTP/1.1
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+content-length: 0
+date: Thu, 31 Jul 2025 15:18:40 GMT
+expires: 0
+pragma: no-cache
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 0
+
+
+>> D:\Engineering Notes\Semester 7\EC7204 Cloud Computing\Assignment\Project\Patient-Management-System\.idea\httpClient\07-31\GET request to validate Token\2025-07-31T204840.txt
