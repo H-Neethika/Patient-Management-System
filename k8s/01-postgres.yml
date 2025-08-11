@@ -1,21 +1,11 @@
 apiVersion: v1
-kind: Secret
-metadata:
-  name: postgres-secret
-  namespace: patient-ms
-type: Opaque
-stringData:
-  POSTGRES_USER: pm_user
-  POSTGRES_PASSWORD: pm_pass
-  POSTGRES_DB: authdb
----
-apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
   namespace: patient-ms
 spec:
-  accessModes: [ReadWriteOnce]
+  accessModes:
+    - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
@@ -40,9 +30,6 @@ metadata:
     app: postgres
 spec:
   replicas: 1
-  # Avoid PVC contention during updates
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: postgres
@@ -51,8 +38,8 @@ spec:
       labels:
         app: postgres
     spec:
-      terminationGracePeriodSeconds: 10
       securityContext:
+        # Ensure the container can write to the mounted PVC on GKE
         runAsUser: 999
         runAsGroup: 999
         fsGroup: 999
@@ -62,10 +49,14 @@ spec:
           image: postgres:16
           ports:
             - containerPort: 5432
-          envFrom:
-            - secretRef:
-                name: postgres-secret
           env:
+            - name: POSTGRES_USER
+              value: pm_user
+            - name: POSTGRES_PASSWORD
+              value: pm_pass
+            - name: POSTGRES_DB
+              value: authdb
+            # Optional but nice: store data in a subdir
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:
@@ -87,13 +78,6 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 6
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "256Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -112,6 +96,5 @@ spec:
   selector:
     app: postgres
   ports:
-    - name: db
-      port: 5432
+    - port: 5432
       targetPort: 5432
