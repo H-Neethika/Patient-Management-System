@@ -134,8 +134,9 @@ jobs:
         env:
           NS: ${{ env.K8S_NAMESPACE }}
         run: |
+          kubectl -n $NS rollout status deployment/analytics-service
+          kubectl -n $NS rollout status deployment/billing-service
           kubectl -n $NS rollout status deployment/api-gateway
           kubectl -n $NS rollout status deployment/auth-service
           kubectl -n $NS rollout status deployment/patient-service
-          kubectl -n $NS rollout status deployment/analytics-service
-          kubectl -n $NS rollout status deployment/billing-service
+          
