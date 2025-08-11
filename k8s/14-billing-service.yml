@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-service
+  namespace: patient-ms
+  labels: { app: billing-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: billing-service }
+  template:
+    metadata:
+      labels: { app: billing-service }
+    spec:
+      containers:
+        - name: billing-service
+          image: billing-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4001   # HTTP (if any)
+            - containerPort: 9001   # gRPC
+          readinessProbe:
+            tcpSocket: { port: 9001 }
+            initialDelaySeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 9001 }
+            initialDelaySeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing-service
+  namespace: patient-ms
+spec:
+  selector: { app: billing-service }
+  ports:
+    - name: http
+      port: 4001
+      targetPort: 4001
+    - name: grpc
+      port: 9001
+      targetPort: 9001
