@@ -110,7 +110,8 @@ jobs:
           kubectl apply -f k8s/02-kafka-dev.yml --namespace "$K8S_NAMESPACE"
 
       - name: Wait for infra to be Ready
-        env: { NS: ${{ env.K8S_NAMESPACE }} }
+        env:
+          NS: ${{ env.K8S_NAMESPACE }}
         run: |
           set -eux
           kubectl -n "$NS" rollout status deploy/postgres --timeout=180s
@@ -137,7 +138,8 @@ jobs:
           done
 
       - name: Wait for rollout
-        env: { NS: ${{ env.K8S_NAMESPACE }} }
+        env:
+          NS: ${{ env.K8S_NAMESPACE }}
         run: |
           set -eux
           for d in api-gateway auth-service patient-service analytics-service billing-service; do
