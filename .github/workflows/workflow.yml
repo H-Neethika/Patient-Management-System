@@ -51,6 +51,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+        # 🔧 This fixes the cache error
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          driver: docker-container
+
       - name: Build & push image
         uses: docker/build-push-action@v6
         with:
