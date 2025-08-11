@@ -27,6 +27,8 @@ metadata:
   namespace: patient-ms
 data:
   01-create-dbs.sql: |
+    -- Runs only on a BRAND NEW (empty) data directory
+    -- Create the extra database your services need
     CREATE DATABASE patientdb OWNER pm_user;
 ---
 apiVersion: apps/v1
@@ -34,15 +36,22 @@ kind: Deployment
 metadata:
   name: postgres
   namespace: patient-ms
-  labels: { app: postgres }
+  labels:
+    app: postgres
 spec:
   replicas: 1
+  # Avoid PVC contention during updates
+  strategy:
+    type: Recreate
   selector:
-    matchLabels: { app: postgres }
+    matchLabels:
+      app: postgres
   template:
     metadata:
-      labels: { app: postgres }
+      labels:
+        app: postgres
     spec:
+      terminationGracePeriodSeconds: 10
       securityContext:
         runAsUser: 999
         runAsGroup: 999
@@ -54,7 +63,8 @@ spec:
           ports:
             - containerPort: 5432
           envFrom:
-            - secretRef: { name: postgres-secret }
+            - secretRef:
+                name: postgres-secret
           env:
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
@@ -64,14 +74,30 @@ spec:
             - name: initdb
               mountPath: /docker-entrypoint-initdb.d
           readinessProbe:
-            tcpSocket: { port: 5432 }
+            tcpSocket:
+              port: 5432
             initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
           livenessProbe:
-            tcpSocket: { port: 5432 }
+            tcpSocket:
+              port: 5432
             initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
       volumes:
         - name: data
-          persistentVolumeClaim: { claimName: postgres-pvc }
+          persistentVolumeClaim:
+            claimName: postgres-pvc
         - name: initdb
           configMap:
             name: postgres-initdb
@@ -83,7 +109,8 @@ metadata:
   name: postgres
   namespace: patient-ms
 spec:
-  selector: { app: postgres }
+  selector:
+    app: postgres
   ports:
     - name: db
       port: 5432
