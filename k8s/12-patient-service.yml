@@ -3,15 +3,38 @@ kind: Deployment
 metadata:
   name: patient-service
   namespace: patient-ms
-  labels: { app: patient-service }
+  labels:
+    app: patient-service
 spec:
   replicas: 2
   selector:
-    matchLabels: { app: patient-service }
+    matchLabels:
+      app: patient-service
   template:
     metadata:
-      labels: { app: patient-service }
+      labels:
+        app: patient-service
     spec:
+      # Wait for Postgres and Kafka before starting the app
+      initContainers:
+        - name: wait-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgres.patient-ms.svc.cluster.local 5432; do
+                echo "waiting for postgres..."; sleep 2;
+              done
+        - name: wait-kafka
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z kafka.patient-ms.svc.cluster.local 9092; do
+                echo "waiting for kafka..."; sleep 2;
+              done
       containers:
         - name: patient-service
           image: neethika1304/patient-service:latest
@@ -22,17 +45,41 @@ spec:
             - name: SPRING_DATASOURCE_URL
               value: jdbc:postgresql://postgres.patient-ms.svc.cluster.local:5432/patientdb
             - name: SPRING_DATASOURCE_USERNAME
-              value: pm_user
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
             - name: SPRING_DATASOURCE_PASSWORD
-              value: pm_pass
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: kafka.patient-ms.svc.cluster.local:9092
+          # Give Spring time to fully start before liveness kicks in
+          startupProbe:
+            tcpSocket:
+              port: 4000
+            failureThreshold: 30
+            periodSeconds: 2
           readinessProbe:
-            tcpSocket: { port: 4000 }
-            initialDelaySeconds: 10
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 10
           livenessProbe:
-            tcpSocket: { port: 4000 }
-            initialDelaySeconds: 15
+            tcpSocket:
+              port: 4000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
 ---
 apiVersion: v1
 kind: Service
@@ -40,7 +87,9 @@ metadata:
   name: patient-service
   namespace: patient-ms
 spec:
-  selector: { app: patient-service }
+  selector:
+    app: patient-service
   ports:
-    - port: 4000
+    - name: http
+      port: 4000
       targetPort: 4000
