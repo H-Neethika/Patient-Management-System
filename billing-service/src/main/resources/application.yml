@@ -1,7 +1,15 @@
 springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
+  api-docs.path: /v3/api-docs
+  swagger-ui.path: /swagger-ui.html
+
 server:
+  address: 0.0.0.0          # <<< allow in-pod access
   forward-headers-strategy: framework
+
+management:                  # <<< expose health endpoints (handy if you add HTTP probes later)
+  endpoints:
+    web.exposure.include: health,info
+  endpoint.health.probes.enabled: true
+  health:
+    livenessState.enabled: true
+    readinessState.enabled: true

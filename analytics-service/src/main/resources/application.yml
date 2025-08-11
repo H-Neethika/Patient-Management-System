@@ -1,7 +1,26 @@
+# analytics-service/src/main/resources/application.yml   <-- fixed path & filename
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
 server:
+  port: 4003
+  address: 0.0.0.0
   forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true

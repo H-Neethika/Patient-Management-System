@@ -17,14 +17,35 @@ spec:
           image: neethika1304/billing-service:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 4001   # HTTP (if any)
-            - containerPort: 9001   # gRPC
-          readinessProbe:
+            - name: http                    # <<< name the ports (helps tooling)
+              containerPort: 4001
+            - name: grpc
+              containerPort: 9001
+          # --- Probes ---
+          startupProbe:                     # <<< prevents early liveness/readiness
             tcpSocket: { port: 9001 }
-            initialDelaySeconds: 10
+            failureThreshold: 30
+            periodSeconds: 3
+            timeoutSeconds: 2
+          readinessProbe:
+            tcpSocket: { port: 9001 }       # simple but works for gRPC (HTTP/2 over TCP)
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
           livenessProbe:
             tcpSocket: { port: 9001 }
-            initialDelaySeconds: 15
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
+          resources:                         # <<< avoid eviction on small nodes
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service

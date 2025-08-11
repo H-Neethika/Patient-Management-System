@@ -1,3 +1,4 @@
+# k8s/13-analytics-service.yml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,18 +17,36 @@ spec:
         - name: analytics-service
           image: neethika1304/analytics-service:latest
           imagePullPolicy: Always
-          # If your analytics-service does NOT expose HTTP, you can drop ports/probes.
           ports:
             - containerPort: 4003
           env:
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: kafka.patient-ms.svc.cluster.local:9092
+          # Probes → use HTTP Actuator
+          startupProbe:
+            httpGet: { path: /actuator/health/liveness, port: 4003 }
+            failureThreshold: 30
+            periodSeconds: 3
+            timeoutSeconds: 2
           readinessProbe:
-            tcpSocket: { port: 4003 }
-            initialDelaySeconds: 10
+            httpGet: { path: /actuator/health/readiness, port: 4003 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
           livenessProbe:
-            tcpSocket: { port: 4003 }
-            initialDelaySeconds: 15
+            httpGet: { path: /actuator/health/liveness, port: 4003 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service
