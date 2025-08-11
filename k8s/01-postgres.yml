@@ -1,11 +1,21 @@
 apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: patient-ms
+type: Opaque
+stringData:
+  POSTGRES_USER: pm_user
+  POSTGRES_PASSWORD: pm_pass
+  POSTGRES_DB: authdb
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
   namespace: patient-ms
 spec:
-  accessModes:
-    - ReadWriteOnce
+  accessModes: [ReadWriteOnce]
   resources:
     requests:
       storage: 10Gi
@@ -17,8 +27,6 @@ metadata:
   namespace: patient-ms
 data:
   01-create-dbs.sql: |
-    -- Runs only on a BRAND NEW (empty) data directory
-    -- Create the extra database your services need
     CREATE DATABASE patientdb OWNER pm_user;
 ---
 apiVersion: apps/v1
@@ -26,20 +34,16 @@ kind: Deployment
 metadata:
   name: postgres
   namespace: patient-ms
-  labels:
-    app: postgres
+  labels: { app: postgres }
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: postgres
+    matchLabels: { app: postgres }
   template:
     metadata:
-      labels:
-        app: postgres
+      labels: { app: postgres }
     spec:
       securityContext:
-        # Ensure the container can write to the mounted PVC on GKE
         runAsUser: 999
         runAsGroup: 999
         fsGroup: 999
@@ -49,14 +53,9 @@ spec:
           image: postgres:16
           ports:
             - containerPort: 5432
+          envFrom:
+            - secretRef: { name: postgres-secret }
           env:
-            - name: POSTGRES_USER
-              value: pm_user
-            - name: POSTGRES_PASSWORD
-              value: pm_pass
-            - name: POSTGRES_DB
-              value: authdb
-            # Optional but nice: store data in a subdir
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:
@@ -65,23 +64,14 @@ spec:
             - name: initdb
               mountPath: /docker-entrypoint-initdb.d
           readinessProbe:
-            tcpSocket:
-              port: 5432
+            tcpSocket: { port: 5432 }
             initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 6
           livenessProbe:
-            tcpSocket:
-              port: 5432
+            tcpSocket: { port: 5432 }
             initialDelaySeconds: 20
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 6
       volumes:
         - name: data
-          persistentVolumeClaim:
-            claimName: postgres-pvc
+          persistentVolumeClaim: { claimName: postgres-pvc }
         - name: initdb
           configMap:
             name: postgres-initdb
@@ -93,8 +83,8 @@ metadata:
   name: postgres
   namespace: patient-ms
 spec:
-  selector:
-    app: postgres
+  selector: { app: postgres }
   ports:
-    - port: 5432
+    - name: db
+      port: 5432
       targetPort: 5432
