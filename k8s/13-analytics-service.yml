@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: analytics-service
-          image: analytics-service
+          image: neethika1304/analytics-service:latest
           imagePullPolicy: Always
           # If your analytics-service does NOT expose HTTP, you can drop ports/probes.
           ports:

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: auth-service
+          image: neethika1304/auth-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 4005
