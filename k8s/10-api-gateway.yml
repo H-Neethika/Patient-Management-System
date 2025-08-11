@@ -6,24 +6,51 @@ metadata:
   labels: { app: api-gateway }
 spec:
   replicas: 2
+  revisionHistoryLimit: 3                      # <<< MODIFIED: small history to keep cluster tidy
   selector:
     matchLabels: { app: api-gateway }
   template:
     metadata:
       labels: { app: api-gateway }
     spec:
+      terminationGracePeriodSeconds: 30        # <<< MODIFIED: cleaner shutdown between rollouts
       containers:
         - name: api-gateway
           image: neethika1304/api-gateway:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 4004
-          readinessProbe:
-            tcpSocket: { port: 4004 }
-            initialDelaySeconds: 10
-          livenessProbe:
-            tcpSocket: { port: 4004 }
-            initialDelaySeconds: 15
+          # --- Probes ---
+          startupProbe:                        # <<< MODIFIED: prevent liveness/readiness until booted
+            httpGet:
+              path: /actuator/health/liveness  # requires Spring Boot Actuator + probe health enabled
+              port: 4004
+            failureThreshold: 30               # ~90s @ periodSeconds 3
+            periodSeconds: 3
+            timeoutSeconds: 2
+          readinessProbe:                      # <<< MODIFIED: HTTP readiness; no traffic until healthy
+            httpGet:
+              path: /actuator/health/readiness
+              port: 4004
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+          livenessProbe:                       # <<< MODIFIED: HTTP liveness; relaxed to avoid SIGTERM loop
+            httpGet:
+              path: /actuator/health/liveness
+              port: 4004
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
+          resources:                           # <<< MODIFIED: small, explicit resources for stability
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -36,3 +63,5 @@ spec:
   ports:
     - port: 80
       targetPort: 4004
+      protocol: TCP
+      name: http                               # <<< MODIFIED: named port (helps some ingress/controllers)

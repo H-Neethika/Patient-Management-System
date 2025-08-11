@@ -1,39 +1,65 @@
 server:
   port: 4004
+  address: 0.0.0.0        # <- listen on all interfaces inside the pod
 
 spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
   cloud:
     gateway:
-      server:
-        webflux:
-          routes:
-            - id: auth-service-route
-              uri: http://auth-service:4005
-              predicates:
-                - Path=/auth/**
-              filters:
-                - StripPrefix=1
+      # (optional) a safe default: strip hop-by-hop headers
+      default-filters:
+        - RemoveHopByHopHeaders=connection,keep-alive,transfer-encoding
+      routes:              # <- FIXED: correct key for Gateway routes
+        - id: auth-service-route
+          uri: http://auth-service:4005
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=1
 
-            # Route for /api/patients/** to patient-service
-            - id: patient-service-route
-              uri: http://patient-service:4000
-              predicates:
-                - Path=/api/patients/**
-              filters:
-                - StripPrefix=1
-                - JwtValidation
+        - id: patient-service-route
+          uri: http://patient-service:4000
+          predicates:
+            - Path=/api/patients/**
+          filters:
+            - StripPrefix=1
+            - JwtValidation     # ensure your custom GatewayFilterFactory bean exists
 
-            # Route for /api/docs/patients to patient-service /v3/api-docs
-            - id: api-docs-patient-route
-              uri: http://patient-service:4000
-              predicates:
-                - Path=/api-docs/patients
-              filters:
-                - RewritePath=/api-docs/patients,/v3/api-docs
+        - id: api-docs-patient-route
+          uri: http://patient-service:4000
+          predicates:
+            - Path=/api-docs/patients
+          filters:
+            - RewritePath=/api-docs/patients,/v3/api-docs
 
-            - id: api-docs-auth-route
-              uri: http://auth-service:4005
-              predicates:
-                - Path=/api-docs/auth
-              filters:
-                - RewritePath=/api-docs/auth,/v3/api-docs
+        - id: api-docs-auth-route
+          uri: http://auth-service:4005
+          predicates:
+            - Path=/api-docs/auth
+          filters:
+            - RewritePath=/api-docs/auth,/v3/api-docs
+
+# Actuator health for Kubernetes probes
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true     # exposes /actuator/health/liveness & /readiness
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+# Optional: friendlier logs while debugging startup
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    org.springframework.boot.actuate: INFO
