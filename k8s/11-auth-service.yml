@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: auth-service:latest
+          image: auth-service
           imagePullPolicy: Always
           ports:
             - containerPort: 4005

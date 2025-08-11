@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: api-gateway:latest
+          image: api-gateway
           imagePullPolicy: Always
           ports:
             - containerPort: 4004

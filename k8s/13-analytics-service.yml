@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: analytics-service
-          image: analytics-service:latest
+          image: analytics-service
           imagePullPolicy: Always
           # If your analytics-service does NOT expose HTTP, you can drop ports/probes.
           ports:
