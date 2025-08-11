@@ -1,12 +1,38 @@
-# k8s/01-postgres.yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: patient-ms
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # storageClassName: standard-rwo   # optional: PVC already bound to default SC; uncomment if you want to pin it
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  namespace: patient-ms
+data:
+  01-create-dbs.sql: |
+    -- Runs only on a BRAND NEW (empty) data directory
+    CREATE DATABASE patientdb OWNER pm_user;
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
   namespace: patient-ms
+  labels:
+    app: postgres
 spec:
-  progressDeadlineSeconds: 1200              # ← increase headroom for cold starts/initdb
   replicas: 1
+  progressDeadlineSeconds: 1200            # <<< MODIFIED: more headroom for first-time init
   selector:
     matchLabels:
       app: postgres
@@ -39,7 +65,7 @@ spec:
               mountPath: /var/lib/postgresql/data
             - name: initdb
               mountPath: /docker-entrypoint-initdb.d
-          readinessProbe:                     # <<< MODIFIED: use pg_isready instead of tcp
+          readinessProbe:                   # <<< MODIFIED: pg_isready is more accurate than tcp for readiness
             exec:
               command:
                 - sh
@@ -49,14 +75,14 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 24
-          livenessProbe:                      # keep liveness simple
+          livenessProbe:
             tcpSocket:
               port: 5432
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 6
-          resources:                          # <<< MODIFIED: small but explicit resources help scheduler
+          resources:                        # <<< MODIFIED: explicit but small resources for stable scheduling
             requests:
               cpu: "100m"
               memory: "256Mi"
@@ -71,3 +97,16 @@ spec:
           configMap:
             name: postgres-initdb
             defaultMode: 0775
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: patient-ms
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
