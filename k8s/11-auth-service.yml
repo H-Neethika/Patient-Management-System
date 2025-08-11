@@ -3,15 +3,19 @@ kind: Deployment
 metadata:
   name: auth-service
   namespace: patient-ms
-  labels: { app: auth-service }
+  labels:
+    app: auth-service
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: auth-service }
+    matchLabels:
+      app: auth-service
   template:
     metadata:
-      labels: { app: auth-service }
+      labels:
+        app: auth-service
     spec:
+      terminationGracePeriodSeconds: 30
       containers:
         - name: auth-service
           image: neethika1304/auth-service:latest
@@ -25,12 +29,40 @@ spec:
               value: pm_user
             - name: SPRING_DATASOURCE_PASSWORD
               value: pm_pass
+
+          # Wait for Spring Boot to be fully started before liveness kicks in
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 4005
+            failureThreshold: 30   # ~90s at periodSeconds=3
+            periodSeconds: 3
+
           readinessProbe:
-            tcpSocket: { port: 4005 }
-            initialDelaySeconds: 10
+            httpGet:
+              path: /actuator/health/readiness
+              port: 4005
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+
           livenessProbe:
-            tcpSocket: { port: 4005 }
-            initialDelaySeconds: 15
+            httpGet:
+              path: /actuator/health/liveness
+              port: 4005
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -38,7 +70,10 @@ metadata:
   name: auth-service
   namespace: patient-ms
 spec:
-  selector: { app: auth-service }
+  selector:
+    app: auth-service
   ports:
     - port: 4005
       targetPort: 4005
+      protocol: TCP
+      name: http

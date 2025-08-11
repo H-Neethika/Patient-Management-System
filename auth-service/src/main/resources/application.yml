@@ -5,3 +5,18 @@ springdoc:
     path: /swagger-ui.html
 server:
   forward-headers-strategy: framework
+# application.yml (both apps)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true     # enables /actuator/health/liveness & /readiness
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
