@@ -4,25 +4,46 @@ metadata:
   name: postgres-pvc
   namespace: patient-ms
 spec:
-  accessModes: [ReadWriteOnce]
+  accessModes:
+    - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  namespace: patient-ms
+data:
+  01-create-dbs.sql: |
+    -- Runs only on a BRAND NEW (empty) data directory
+    -- Create the extra database your services need
+    CREATE DATABASE patientdb OWNER pm_user;
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
   namespace: patient-ms
-  labels: { app: postgres }
+  labels:
+    app: postgres
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: postgres }
+    matchLabels:
+      app: postgres
   template:
     metadata:
-      labels: { app: postgres }
+      labels:
+        app: postgres
     spec:
+      securityContext:
+        # Ensure the container can write to the mounted PVC on GKE
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: postgres
           image: postgres:16
@@ -35,13 +56,36 @@ spec:
               value: pm_pass
             - name: POSTGRES_DB
               value: authdb
+            # Optional but nice: store data in a subdir
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: postgres-pvc
+        - name: initdb
+          configMap:
+            name: postgres-initdb
+            defaultMode: 0775
 ---
 apiVersion: v1
 kind: Service
@@ -49,7 +93,8 @@ metadata:
   name: postgres
   namespace: patient-ms
 spec:
-  selector: { app: postgres }
+  selector:
+    app: postgres
   ports:
     - port: 5432
       targetPort: 5432
