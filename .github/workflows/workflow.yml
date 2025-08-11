@@ -114,8 +114,9 @@ jobs:
           NS: ${{ env.K8S_NAMESPACE }}
         run: |
           set -eux
-          kubectl -n "$NS" rollout status deploy/postgres --timeout=180s
-          kubectl -n "$NS" rollout status deploy/kafka --timeout=180s
+          kubectl -n "$NS" wait --for=condition=available deployment/postgres --timeout=360s
+          kubectl -n "$NS" wait --for=condition=available deployment/kafka --timeout=360s
+
 
       # ---- Apply app services ----
       - name: Apply services
