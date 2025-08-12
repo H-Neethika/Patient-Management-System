@@ -5,7 +5,7 @@ metadata:
   namespace: patient-ms
   labels: { app: api-gateway }
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 3                      # <<< MODIFIED: small history to keep cluster tidy
   selector:
     matchLabels: { app: api-gateway }
