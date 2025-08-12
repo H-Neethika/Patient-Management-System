@@ -15,7 +15,8 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: auth-service
-          image: neethika1304/auth-service:latest   # (Consider pinning a tag later)
+          # TIP: pin a version tag instead of :latest (e.g., :1.0.0)
+          image: neethika1304/auth-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 4005
@@ -26,24 +27,22 @@ spec:
               value: pm_user
             - name: SPRING_DATASOURCE_PASSWORD
               value: pm_pass
-            # Helpful for containerized JVM sizing
+            # JVM sizing that behaves well in containers
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage=75 -XX:InitialRAMPercentage=50"
 
-          # Probes → SAME style as analytics-service, just port 4005
+          # Probes → same style as analytics-service, on port 4005
           startupProbe:
             httpGet: { path: /actuator/health/liveness, port: 4005 }
             failureThreshold: 30
             periodSeconds: 3
             timeoutSeconds: 2
-
           readinessProbe:
             httpGet: { path: /actuator/health/readiness, port: 4005 }
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 6
-
           livenessProbe:
             httpGet: { path: /actuator/health/liveness, port: 4005 }
             initialDelaySeconds: 30
