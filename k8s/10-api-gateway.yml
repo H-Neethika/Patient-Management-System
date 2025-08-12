@@ -6,7 +6,7 @@ metadata:
   labels: { app: api-gateway }
 spec:
   replicas: 2
-  revisionHistoryLimit: 2                      # <<< MODIFIED: small history to keep cluster tidy
+  revisionHistoryLimit: 3                      # <<< MODIFIED: small history to keep cluster tidy
   selector:
     matchLabels: { app: api-gateway }
   template:
